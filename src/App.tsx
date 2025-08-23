@@ -1,7 +1,7 @@
 
 const App = () => {
   return (
-    <div>Brown</div>
+    <div>Brown is an AI Powerd Frontend Toolkit</div>
   )
 }
 
