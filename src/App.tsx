@@ -1,114 +1,128 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import "./App.css";
 
-// --- Re-usable Color Extractor Component ---
-const ColorExtractorView = ({ onBack }: { onBack: () => void }) => {
-  const [colors, setColors] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+type ContentResponse =
+  | { error: string }
+  | { colors: string[] }
+  | Record<string, never>;
 
-  useEffect(() => {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      const activeTabId = tabs[0]?.id;
-      if (!activeTabId) {
-        setErrorMessage("Cannot access this page.");
-        setLoading(false);
-        return;
-      }
-      chrome.tabs.sendMessage(
-        activeTabId,
-        { type: "GET_PAGE_COLORS" },
-        (response) => {
-          if (chrome.runtime.lastError) {
-            setErrorMessage(
-              "Could not connect to the page. Please reload the tab."
-            );
-            setLoading(false);
-          } else if (
-            response &&
-            response.colors &&
-            response.colors.length > 0
-          ) {
-            setColors(response.colors);
-            setLoading(false);
-          } else {
-            setLoading(false);
-            setErrorMessage("No colors found on this page.");
-          }
-        }
-      );
-    });
-  }, []);
-
-  return (
-    <div>
-      <button onClick={onBack} className="back-button">
-        ← Back to Menu
-      </button>
-      <h1>Page Color Palette</h1>
-      {loading ? (
-        <p>Scanning page...</p>
-      ) : errorMessage ? (
-        <p>{errorMessage}</p>
-      ) : (
-        <div className="color-grid">
-          {colors.map((color, index) => (
-            <div key={index} className="color-item">
-              <div
-                className="color-swatch"
-                style={{ backgroundColor: color }}
-                title={color}
-              ></div>
-              <span className="color-code">{color}</span>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
-// --- Main App Component ---
 function App() {
   const [view, setView] = useState<"menu" | "color-extractor">("menu");
 
-  const activateTextEditor = () => {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      const activeTabId = tabs[0]?.id;
-      if (activeTabId) {
-        chrome.tabs.sendMessage(
-          activeTabId,
-          { type: "ENABLE_TEXT_EDIT_MODE" },
-          () => {
-            if (chrome.runtime.lastError) {
-              alert(
-                "Could not connect to the page. Please reload the page first."
-              );
-            }
-            window.close();
-          }
-        );
+  const [colors, setColors] = useState<string[]>([]);
+  const [isLoadingColors, setIsLoadingColors] = useState(false);
+  const [colorError, setColorError] = useState<string | null>(null);
+
+  const executeScriptAndSendMessage = (
+    tabId: number,
+    message: object,
+    callback: (response: ContentResponse) => void
+  ) => {
+    chrome.scripting.executeScript(
+      {
+        target: { tabId: tabId },
+        files: ["content.js"],
+      },
+      () => {
+        if (chrome.runtime.lastError) {
+          callback({
+            error: "Could not inject script. Please reload the page.",
+          });
+          return;
+        }
+        chrome.tabs.sendMessage(tabId, message, callback);
       }
+    );
+  };
+
+  const handleActivateColorExtractor = () => {
+    setIsLoadingColors(true);
+    setColorError(null);
+    setColors([]);
+    setView("color-extractor");
+
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      const tabId = tabs[0]?.id;
+      if (!tabId) return;
+
+      executeScriptAndSendMessage(
+        tabId,
+        { type: "GET_PAGE_COLORS" },
+        (response) => {
+          if ("error" in response) {
+            setColorError(response.error || "Could not connect to the page.");
+          } else if ("colors" in response && response.colors.length > 0) {
+            setColors(response.colors);
+          } else {
+            setColorError("No colors found on this page.");
+          }
+          setIsLoadingColors(false);
+        }
+      );
+    });
+  };
+
+  const handleActivateTextEditor = () => {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      const tabId = tabs[0]?.id;
+      if (!tabId) return;
+
+      executeScriptAndSendMessage(
+        tabId,
+        { type: "ENABLE_TEXT_EDIT_MODE" },
+        () => {
+          if (chrome.runtime.lastError) {
+            alert(
+              "Could not inject script. Please reload the page and try again."
+            );
+          }
+          window.close();
+        }
+      );
     });
   };
 
   const renderView = () => {
     if (view === "color-extractor") {
-      return <ColorExtractorView onBack={() => setView("menu")} />;
+      return (
+        <div>
+          <button onClick={() => setView("menu")} className="back-button">
+            ← Back to Menu
+          </button>
+          <h1>Page Color Palette</h1>
+          {isLoadingColors ? (
+            <p>Scanning page...</p>
+          ) : colorError ? (
+            <p>{colorError}</p>
+          ) : (
+            <div className="color-grid">
+              {colors.map((color, index) => (
+                <div key={index} className="color-item">
+                  <div
+                    className="color-swatch"
+                    style={{ backgroundColor: color }}
+                    title={color}
+                  ></div>
+                  <span className="color-code">{color}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      );
     }
 
-    // Default to menu view
     return (
       <div>
         <h1>AI Frontend Toolkit</h1>
         <div className="tool-menu">
           <button
             className="tool-button"
-            onClick={() => setView("color-extractor")}
+            onClick={handleActivateColorExtractor}
           >
             Color Palette Extractor
           </button>
-          <button className="tool-button" onClick={activateTextEditor}>
+          <button className="tool-button" onClick={handleActivateTextEditor}>
             AI Content Editor
           </button>
         </div>
