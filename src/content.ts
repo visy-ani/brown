@@ -1,46 +1,59 @@
-function collectPageColors(): string[] {
+import ColorThief from "colorthief";
+
+const colorThief = new ColorThief();
+
+async function collectPageColors(): Promise<string[]> {
   const colors = new Set<string>();
 
-  // Get every single element on the page
-  const elements = document.querySelectorAll('*');
-
-  elements.forEach(element => {
-    // Get the computed styles of the element
+  document.querySelectorAll("*").forEach((element) => {
     const styles = window.getComputedStyle(element);
-
-    // List of CSS properties that can contain colors
-    const colorProperties = [
-      'color',
-      'backgroundColor',
-      'borderColor',
-      'borderTopColor',
-      'borderRightColor',
-      'borderBottomColor',
-      'borderLeftColor',
-      'outlineColor'
-    ];
-
-    colorProperties.forEach(prop => {
+    const colorProperties = ["color", "backgroundColor", "borderColor"];
+    colorProperties.forEach((prop) => {
       const color = styles.getPropertyValue(prop);
-      // Check if a color is found and it's not transparent or otherwise invisible
-      if (color && color !== 'rgba(0, 0, 0, 0)' && color !== 'transparent') {
+      if (color && color !== "rgba(0, 0, 0, 0)" && color !== "transparent") {
         colors.add(color);
       }
     });
   });
 
-  // Convert the Set of unique colors to an array and return it
+  const imageElements = Array.from(document.querySelectorAll("img"));
+  const imagePromises = imageElements.map((img) => {
+    return new Promise<void>((resolve) => {
+      const image = new Image();
+      image.crossOrigin = "Anonymous";
+
+      image.onload = () => {
+        try {
+          const dominantColors = colorThief.getPalette(image, 5);
+
+          if (dominantColors) {
+            dominantColors.forEach((rgb) => {
+              colors.add(`rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`);
+            });
+          }
+        } catch (e) {
+          console.error(e);
+        }
+        resolve();
+      };
+
+      image.onerror = () => {
+        resolve(); 
+      };
+
+      image.src = img.src;
+    });
+  });
+
+  await Promise.all(imagePromises);
   return Array.from(colors);
 }
 
-// Listen for a message from our popup
 chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
-  // Check if the message is the one we're looking for
-  if (request.type === 'GET_PAGE_COLORS') {
-    const pageColors = collectPageColors();
-    // Send the collected colors back as a response
-    sendResponse({ colors: pageColors });
+  if (request.type === "GET_PAGE_COLORS") {
+    collectPageColors().then((pageColors) => {
+      sendResponse({ colors: pageColors });
+    });
   }
-  // This is important to allow asynchronous responses
   return true;
 });
