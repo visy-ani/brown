@@ -1,0 +1,20 @@
+:root {
+    --loki-gold: #d4af37;
+    --loki-dark-gold: #b8941f;
+    --loki-green: #228b22;
+    --loki-dark-green: #1a6b1a;
+    --loki-forest: #0f2a0f;
+    --loki-deep-forest: #0a1a0a;
+    --loki-accent: #2e5c2e;
+    --loki-text-light: #e6d7a3;
+    --loki-text-muted: #a8965e;
+    --loki-shadow: rgba(0, 0, 0, 0.8);
+    --loki-glow: rgba(212, 175, 55, 0.3);
+
+    --loki-background-gradient: linear-gradient(135deg,
+            var(--loki-deep-forest) 0%,
+            var(--loki-accent) 25%,
+            var(--loki-forest) 50%,
+            var(--loki-accent) 75%,
+            var(--loki-deep-forest) 100%);
+}
