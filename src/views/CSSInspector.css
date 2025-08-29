@@ -1,0 +1,303 @@
+.css-inspector-view {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1.5rem;
+    min-height: 100vh;
+    color: var(--loki-text-light);
+}
+
+.inspector-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    position: relative;
+}
+
+.back-button {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.subtitle {
+    color: var(--loki-text-muted);
+    font-size: 1.1rem;
+    margin-top: 0.5rem;
+}
+
+.inspector-controls {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2rem;
+}
+
+.start-button {
+    font-size: 1.1rem;
+    padding: 0.8rem 2rem;
+    background: linear-gradient(135deg, var(--loki-green), var(--loki-dark-green));
+    border: 2px solid var(--loki-gold);
+}
+
+.stop-button {
+    font-size: 1.1rem;
+    padding: 0.8rem 2rem;
+    background: linear-gradient(135deg, #cc4125, #a73520);
+    border: 2px solid var(--loki-gold);
+}
+
+.error-message {
+    background: linear-gradient(135deg, #cc4125, #a73520);
+    border: 2px solid #ff6b47;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #fff;
+}
+
+.error-icon {
+    font-size: 1.2rem;
+}
+
+.inspection-status {
+    background: linear-gradient(135deg, var(--loki-accent), var(--loki-forest));
+    border: 2px solid var(--loki-gold);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+    font-size: 1.1rem;
+    color: var(--loki-text-light);
+}
+
+.pulse-dot {
+    width: 12px;
+    height: 12px;
+    background: var(--loki-gold);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 0.4;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.2);
+    }
+}
+
+.element-info {
+    background: linear-gradient(135deg, var(--loki-forest), var(--loki-accent));
+    border: 2px solid var(--loki-gold);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.element-header {
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--loki-gold);
+    padding-bottom: 1rem;
+}
+
+.element-header h3 {
+    color: var(--loki-gold);
+    font-family: 'Cinzel', serif;
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.element-selector {
+    font-family: 'Fira Code', monospace;
+    font-size: 1.1rem;
+    color: var(--loki-text-light);
+    background: rgba(0, 0, 0, 0.3);
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    border: 1px solid var(--loki-dark-gold);
+}
+
+.css-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.css-section h4 {
+    color: var(--loki-gold);
+    font-family: 'Cinzel', serif;
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.css-properties {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.css-properties::-webkit-scrollbar {
+    width: 8px;
+}
+
+.css-properties::-webkit-scrollbar-track {
+    background: var(--loki-forest);
+    border-radius: 4px;
+}
+
+.css-properties::-webkit-scrollbar-thumb {
+    background: var(--loki-gold);
+    border-radius: 4px;
+}
+
+.css-property {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.8rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.css-property:hover {
+    border-color: var(--loki-gold);
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.css-property.inline {
+    border-left: 4px solid var(--loki-gold);
+}
+
+.css-property.computed {
+    border-left: 4px solid var(--loki-text-muted);
+}
+
+.property-name {
+    font-family: 'Fira Code', monospace;
+    font-weight: 600;
+    color: var(--loki-gold);
+    min-width: 150px;
+    flex-shrink: 0;
+}
+
+.property-value {
+    flex: 1;
+    font-family: 'Fira Code', monospace;
+}
+
+.property-display {
+    cursor: pointer;
+    padding: 0.3rem 0.5rem;
+    border-radius: 4px;
+    transition: background 0.2s ease;
+    position: relative;
+}
+
+.property-display:hover {
+    background: rgba(212, 175, 55, 0.1);
+}
+
+.property-display:hover .edit-hint {
+    opacity: 1;
+}
+
+.edit-hint {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.75rem;
+    color: var(--loki-text-muted);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.important {
+    color: #ff6b47;
+    font-weight: 600;
+    margin-left: 0.5rem;
+}
+
+.property-editor {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.property-editor input {
+    flex: 1;
+    background: var(--loki-deep-forest);
+    border: 2px solid var(--loki-gold);
+    border-radius: 4px;
+    padding: 0.4rem 0.8rem;
+    color: var(--loki-text-light);
+    font-family: 'Fira Code', monospace;
+    font-size: 0.9rem;
+}
+
+.property-editor input:focus {
+    outline: none;
+    border-color: var(--loki-dark-gold);
+    box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
+}
+
+.editor-actions {
+    display: flex;
+    gap: 0.3rem;
+}
+
+.save-btn,
+.cancel-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.save-btn {
+    background: var(--loki-green);
+    border-color: var(--loki-dark-green);
+    color: white;
+}
+
+.save-btn:hover {
+    background: var(--loki-dark-green);
+}
+
+.cancel-btn {
+    background: #cc4125;
+    border-color: #a73520;
+    color: white;
+}
+
+.cancel-btn:hover {
+    background: #a73520;
+}

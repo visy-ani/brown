@@ -5,9 +5,14 @@ import "./MenuView.css";
 type Props = {
   onColorExtractor: () => void;
   onTextEditor: () => void;
+  onCSSInspector: () => void;
 };
 
-export default function MenuView({ onColorExtractor, onTextEditor }: Props) {
+export default function MenuView({
+  onColorExtractor,
+  onTextEditor,
+  onCSSInspector,
+}: Props) {
   return (
     <div className="menu-view">
       <div className="loki-header">
@@ -26,6 +31,10 @@ export default function MenuView({ onColorExtractor, onTextEditor }: Props) {
             <span className="button-icon">✍️</span>
             Live Text Editor
           </Button>
+          <Button onClick={onCSSInspector} variant="primary">
+            <span className="button-icon">🕵️</span>
+            CSS Inspector
+          </Button>
         </div>
 
         <div className="upcoming-section">
@@ -34,12 +43,8 @@ export default function MenuView({ onColorExtractor, onTextEditor }: Props) {
             Upcoming Arsenal
             <span className="title-decoration">⚔️</span>
           </h2>
-          
+
           <div className="upcoming-grid">
-            <Button variant="ghost">
-              <span className="button-icon">🕵️</span>
-              CSS Inspector
-            </Button>
             <Button variant="ghost">
               <span className="button-icon">🔤</span>
               List All Fonts

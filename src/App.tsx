@@ -3,6 +3,7 @@ import "./App.css";
 
 import MenuView from "./views/MenuView";
 import ColorExtractorView from "./views/ColorExtractorView";
+import CSSInspectorView from "./views/CSSInspector";
 
 import { executeScriptAndSendMessage } from "./utils/chromeUtils";
 
@@ -12,7 +13,9 @@ type ContentResponse =
   | Record<string, never>;
 
 export default function App() {
-  const [view, setView] = useState<"menu" | "color-extractor">("menu");
+  const [view, setView] = useState<
+    "menu" | "color-extractor" | "css-inspector"
+  >("menu");
 
   const [colors, setColors] = useState<string[]>([]);
   const [isLoadingColors, setIsLoadingColors] = useState(false);
@@ -65,19 +68,29 @@ export default function App() {
     });
   };
 
+  const handleActivateCSSInspector = () => {
+    setView("css-inspector");
+  };
+
   return (
     <div className="app-container">
       {view === "menu" ? (
         <MenuView
           onColorExtractor={handleActivateColorExtractor}
           onTextEditor={handleActivateTextEditor}
+          onCSSInspector={handleActivateCSSInspector}
         />
-      ) : (
+      ) : view === "color-extractor" ? (
         <ColorExtractorView
           colors={colors}
           isLoading={isLoadingColors}
           error={colorError}
           onBack={() => setView("menu")}
+        />
+      ) : (
+        <CSSInspectorView
+          onBack={() => setView("menu")}
+          isActive={view === "css-inspector"}
         />
       )}
     </div>
