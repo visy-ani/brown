@@ -8,25 +8,8 @@ type Props = {
   isActive: boolean;
 };
 
-type CSSProperty = {
-  property: string;
-  value: string;
-  important: boolean;
-};
-
-type ElementInfo = {
-  tagName: string;
-  className: string;
-  id: string;
-  computedStyles: CSSProperty[];
-  inlineStyles: CSSProperty[];
-};
-
 export default function CSSInspectorView({ onBack, isActive }: Props) {
   const [isInspecting, setIsInspecting] = useState(false);
-  const [selectedElement, setSelectedElement] = useState<ElementInfo | null>(
-    null
-  );
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -44,35 +27,15 @@ export default function CSSInspectorView({ onBack, isActive }: Props) {
       if (!tabId) return;
 
       // Send message to content script to start CSS inspection mode
-      chrome.tabs.sendMessage(
-        tabId,
-        { type: "START_CSS_INSPECTION" },
-        (_) => {
-          if (chrome.runtime.lastError) {
-            setError(
-              "Could not connect to the page. Please reload and try again."
-            );
-            setIsInspecting(false);
-          }
+      chrome.tabs.sendMessage(tabId, { type: "START_CSS_INSPECTION" }, () => {
+        if (chrome.runtime.lastError) {
+          setError(
+            "Could not connect to the page. Please reload and try again."
+          );
+          setIsInspecting(false);
         }
-      );
+      });
     });
-
-    // Listen for messages from content script
-    const messageListener = (message: any) => {
-      if (message.type === "ELEMENT_SELECTED") {
-        setSelectedElement(message.elementInfo);
-      } else if (message.type === "INSPECTION_STOPPED") {
-        setIsInspecting(false);
-      }
-    };
-
-    chrome.runtime.onMessage.addListener(messageListener);
-
-    // Cleanup listener when component unmounts or inspection stops
-    return () => {
-      chrome.runtime.onMessage.removeListener(messageListener);
-    };
   };
 
   const handleStopInspecting = () => {
@@ -91,33 +54,10 @@ export default function CSSInspectorView({ onBack, isActive }: Props) {
     onBack();
   };
 
-  const handleUpdateCSS = (
-    property: string,
-    value: string,
-    isInline: boolean
-  ) => {
-    if (!selectedElement) return;
-
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      const tabId = tabs[0]?.id;
-      if (!tabId) return;
-
-      chrome.tabs.sendMessage(tabId, {
-        type: "UPDATE_CSS_PROPERTY",
-        property,
-        value,
-        isInline,
-      });
-    });
-  };
-
   return (
     <div className="css-inspector-view">
       <div className="inspector-header">
-        <Button
-          onClick={handleBackToMenu}
-          variant="secondary"
-        >
+        <Button onClick={handleBackToMenu} variant="secondary">
           ← Back to Menu
         </Button>
         <Header title="CSS Inspector" />
@@ -126,17 +66,11 @@ export default function CSSInspectorView({ onBack, isActive }: Props) {
 
       <div className="inspector-controls">
         {!isInspecting ? (
-          <Button
-            onClick={handleStartInspecting}
-            variant="primary"
-          >
+          <Button onClick={handleStartInspecting} variant="primary">
             🔍 Start CSS Inspection
           </Button>
         ) : (
-          <Button
-            onClick={handleStopInspecting}
-            variant="secondary"
-          >
+          <Button onClick={handleStopInspecting} variant="secondary">
             🛑 Stop Inspection
           </Button>
         )}
@@ -153,126 +87,52 @@ export default function CSSInspectorView({ onBack, isActive }: Props) {
         <div className="inspection-status">
           <div className="status-indicator">
             <span className="pulse-dot"></span>
-            Hover over elements on the page to inspect them
-          </div>
-        </div>
-      )}
-
-      {selectedElement && (
-        <div className="element-info">
-          <div className="element-header">
-            <h3>Selected Element</h3>
-            <div className="element-selector">
-              {selectedElement.tagName}
-              {selectedElement.id && `#${selectedElement.id}`}
-              {selectedElement.className &&
-                `.${selectedElement.className.split(" ").join(".")}`}
-            </div>
-          </div>
-
-          <div className="css-sections">
-            {selectedElement.inlineStyles.length > 0 && (
-              <div className="css-section">
-                <h4>Inline Styles</h4>
-                <div className="css-properties">
-                  {selectedElement.inlineStyles.map((style, index) => (
-                    <CSSPropertyEditor
-                      key={`inline-${index}`}
-                      property={style.property}
-                      value={style.value}
-                      important={style.important}
-                      isInline={true}
-                      onUpdate={handleUpdateCSS}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="css-section">
-              <h4>Computed Styles</h4>
-              <div className="css-properties">
-                {selectedElement.computedStyles
-                  .slice(0, 20)
-                  .map((style, index) => (
-                    <CSSPropertyEditor
-                      key={`computed-${index}`}
-                      property={style.property}
-                      value={style.value}
-                      important={style.important}
-                      isInline={false}
-                      onUpdate={handleUpdateCSS}
-                    />
-                  ))}
+            <div style={{ textAlign: "center" }}>
+              <div>CSS Inspector is active!</div>
+              <div
+                style={{
+                  fontSize: "0.9rem",
+                  marginTop: "0.5rem",
+                  opacity: 0.8,
+                }}
+              >
+                • Hover over elements to see their CSS properties
+                <br />
+                • A panel will appear on the page with details
+                <br />
+                • Click elements to keep the panel focused
+                <br />• Close this popup to continue inspecting
               </div>
             </div>
           </div>
         </div>
       )}
-    </div>
-  );
-}
 
-type CSSPropertyEditorProps = {
-  property: string;
-  value: string;
-  important: boolean;
-  isInline: boolean;
-  onUpdate: (property: string, value: string, isInline: boolean) => void;
-};
-
-function CSSPropertyEditor({
-  property,
-  value: initialValue,
-  important,
-  isInline,
-  onUpdate,
-}: CSSPropertyEditorProps) {
-  const [value, setValue] = useState(initialValue);
-  const [isEditing, setIsEditing] = useState(false);
-
-  const handleSave = () => {
-    onUpdate(property, value, isInline);
-    setIsEditing(false);
-  };
-
-  const handleCancel = () => {
-    setValue(initialValue);
-    setIsEditing(false);
-  };
-
-  return (
-    <div className={`css-property ${isInline ? "inline" : "computed"}`}>
-      <div className="property-name">{property}:</div>
-      <div className="property-value">
-        {isEditing ? (
-          <div className="property-editor">
-            <input
-              type="text"
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleSave();
-                if (e.key === "Escape") handleCancel();
-              }}
-              autoFocus
-            />
-            <div className="editor-actions">
-              <button onClick={handleSave} className="save-btn">
-                ✓
-              </button>
-              <button onClick={handleCancel} className="cancel-btn">
-                ✗
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="property-display" onClick={() => setIsEditing(true)}>
-            {value}
-            {important && <span className="important">!important</span>}
-            <span className="edit-hint">Click to edit</span>
-          </div>
-        )}
+      <div
+        style={{
+          marginTop: "2rem",
+          padding: "1.5rem",
+          background:
+            "linear-gradient(135deg, var(--loki-accent), var(--loki-forest))",
+          border: "2px solid var(--loki-gold)",
+          borderRadius: "12px",
+          textAlign: "center",
+        }}
+      >
+        <h3 style={{ color: "var(--loki-gold)", marginBottom: "1rem" }}>
+          How to Use
+        </h3>
+        <div style={{ fontSize: "0.9rem", lineHeight: "1.6" }}>
+          1. Click "Start CSS Inspection" above
+          <br />
+          2. A floating panel will appear on the page
+          <br />
+          3. Hover over any element to see its CSS properties
+          <br />
+          4. The panel shows both inline and computed styles
+          <br />
+          5. Click "Stop Inspection" when done
+        </div>
       </div>
     </div>
   );
